@@ -19,6 +19,7 @@ class Agent:
             model_save_file=None,
             model_load_file=None,
             log_dir=None,
+            verbose=2,
         ):
         self.batch_size = batch_size
         self.epochs = epochs
@@ -33,6 +34,7 @@ class Agent:
         else:
             self.model = self._compile_model()
         self.log_dir = log_dir
+        self.verbose = verbose
 
 
     def _compile_model(self):
@@ -63,9 +65,10 @@ class Agent:
                 batch_size=self.batch_size,
                 validation_data=validation_data,
                 callbacks=callbacks,
+                verbose=self.verbose,
             )
             if evaluate:
-                test_loss = self.model.evaluate(x_test, y_test, verbose=2)
+                test_loss = self.model.evaluate(x_test, y_test, verbose=self.verbose)
 
     def infer(self, grid):
         grid = datasets.norm(grid)

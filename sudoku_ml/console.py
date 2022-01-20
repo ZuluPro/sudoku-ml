@@ -80,6 +80,7 @@ def main():
         model_load_file=args.model_load_file,
         model_save_file=args.model_save_file,
         log_dir=args.log_dir,
+        verbose=args.args.tf_verbose,
     )
 
     if args.action == 'train':
