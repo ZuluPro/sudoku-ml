@@ -1,7 +1,9 @@
 import os
+import sys
 import argparse
 import logging
 
+import numpy as np
 import tensorflow as tf
 
 from sudoku_ml.agent import Agent
@@ -13,14 +15,15 @@ tf_logger = logging.getLogger('tensorflow')
 
 parser = argparse.ArgumentParser()
 # Common
-parser.add_argument('action', default='train', choices=('train', 'infer'), nargs='?')
+parser.add_argument('action', default='train', choices=('train', 'infer', 'generate'), nargs='?')
 parser.add_argument('--runs', type=int, default=100, help='Number of runs')
 parser.add_argument('--batch-size', type=int, default=32)
 # Training
 parser.add_argument('--epochs', type=int, default=2)
 parser.add_argument('--dataset-size', type=int, default=100000)
-# parser.add_argument('--lr', type=float, default=0.0001)
 # Inference
+# Generator
+parser.add_argument('--generator-processes', type=int, default=4)
 # Model
 parser.add_argument('--model-path', default='sudoku_ml.models.DEFAULT_MODEL',
                     help='Python path to the model to compile')
@@ -80,13 +83,14 @@ def main():
         model_load_file=args.model_load_file,
         model_save_file=args.model_save_file,
         log_dir=args.log_dir,
-        verbose=args.args.tf_verbose,
+        verbose=args.tf_verbose,
     )
 
     if args.action == 'train':
         dataset = datasets.generate_training_dataset(
             count=args.dataset_size,
             removed=10,
+            processes=args.generator_processes,
         )
         agent.train(
             runs=args.runs,
@@ -105,6 +109,19 @@ def main():
             logger.debug('%s', x[i].reshape((9, 9)))
 
         print('Success: %s/%s' % (valid_count, args.runs))
+    elif args.action == 'generate':
+        x, y = datasets.generate_dataset(
+            count=args.dataset_size,
+            removed=10,
+            processes=args.generator_processes,
+        )
+        x = x.reshape((args.dataset_size, 81)).astype(str)
+        y = (y.reshape((args.dataset_size, 81)) + 1).astype(str)
+        x = np.apply_along_axis(''.join, 1, x)
+        y = np.apply_along_axis(''.join, 1, y)
+        dataset = np.array([i for i in zip(x, y)])
+        print('quizzes,solutions')
+        np.savetxt(sys.stdout, dataset, fmt='%s', delimiter=',')
 
 
 if __name__ == "__main__":
