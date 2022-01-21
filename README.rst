@@ -70,4 +70,23 @@ Usage
     --tf-profiler-port TF_PROFILER_PORT
     --verbose VERBOSE, -v VERBOSE
     --tf-verbose TF_VERBOSE, -tfv TF_VERBOSE
+  
+  
+Docker support
+--------------
+
+Dockerfile for classic Tensorflow and the GPU version are available: ::
+
+  # For CPU
+  docker build -f Dockerfile -t sudoku-ml .
+  docker run -it sudoku-ml
+  
+  # For GPU
+  docker build -f Dockerfile-gpu -t sudoku-ml-gpu .
+  docker run --gpus all -it sudoku-ml-gpu
+  
+The commands above will run a training, then save the model in `/models/current.h5`. You can mount a volume on `/models/` to keep it. In the same idea you can mount a volume on `/log_dir/`, to retrive the Tensorboard data.
+
+    
+    
 
