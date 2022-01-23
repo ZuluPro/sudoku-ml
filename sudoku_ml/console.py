@@ -1,10 +1,10 @@
 import os
-import sys
 import argparse
 import logging
 
-import numpy as np
+import numpy as bnp
 import tensorflow as tf
+from tensorflow.experimental import numpy as np
 
 from sudoku_ml.agent import Agent
 from sudoku_ml import datasets
@@ -104,24 +104,25 @@ def main():
         for i in range(args.runs):
             X, Y, value = agent.infer(x[i])
             is_valid = y[i].reshape((9, 9))[X, Y] == value
-            valid_count += is_valid
+            valid_count += bool(is_valid)
             logger.info('%s\t: %s - %s', i, (X, Y, value+1), is_valid)
             logger.debug('%s', x[i].reshape((9, 9)))
 
         print('Success: %s/%s' % (valid_count, args.runs))
+
     elif args.action == 'generate':
         x, y = datasets.generate_dataset(
             count=args.dataset_size,
             removed=10,
             processes=args.generator_processes,
         )
-        x = x.reshape((args.dataset_size, 81)).astype(str)
-        y = (y.reshape((args.dataset_size, 81)) + 1).astype(str)
-        x = np.apply_along_axis(''.join, 1, x)
-        y = np.apply_along_axis(''.join, 1, y)
-        dataset = np.array([i for i in zip(x, y)])
+        x = x.reshape((args.dataset_size, 81)).numpy().astype(str)
+        y = (y.reshape((args.dataset_size, 81)) + 1).numpy().astype(str)
+        x = bnp.apply_along_axis(''.join, 1, x)
+        y = bnp.apply_along_axis(''.join, 1, y)
         print('quizzes,solutions')
-        np.savetxt(sys.stdout, dataset, fmt='%s', delimiter=',')
+        for i in bnp.arange(args.dataset_size):
+            print('%s,%s' % (x[i], y[i]))
 
 
 if __name__ == "__main__":
