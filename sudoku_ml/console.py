@@ -85,12 +85,14 @@ def main():
         log_dir=args.log_dir,
         verbose=args.tf_verbose,
     )
+    generator = datasets.Generator(
+        processes=args.generator_processes,
+    )
 
     if args.action == 'train':
-        dataset = datasets.generate_training_dataset(
+        dataset = generator.generate_training_dataset(
             count=args.dataset_size,
             removed=10,
-            processes=args.generator_processes,
         )
         agent.train(
             runs=args.runs,
@@ -100,7 +102,7 @@ def main():
 
     elif args.action == 'infer':
         valid_count = 0
-        x, y = datasets.generate_dataset(args.runs)
+        x, y = generator.generate_dataset(args.runs)
         for i in range(args.runs):
             X, Y, value = agent.infer(x[i])
             is_valid = y[i].reshape((9, 9))[X, Y] == value
@@ -111,18 +113,11 @@ def main():
         print('Success: %s/%s' % (valid_count, args.runs))
 
     elif args.action == 'generate':
-        x, y = datasets.generate_dataset(
+        x, y = generator.generate_dataset(
             count=args.dataset_size,
             removed=10,
-            processes=args.generator_processes,
         )
-        x = x.reshape((args.dataset_size, 81)).numpy().astype(str)
-        y = (y.reshape((args.dataset_size, 81)) + 1).numpy().astype(str)
-        x = bnp.apply_along_axis(''.join, 1, x)
-        y = bnp.apply_along_axis(''.join, 1, y)
-        print('quizzes,solutions')
-        for i in bnp.arange(args.dataset_size):
-            print('%s,%s' % (x[i], y[i]))
+        generator.print_training_dataset((x, y))
 
 
 if __name__ == "__main__":
