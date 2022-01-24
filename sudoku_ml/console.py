@@ -19,14 +19,15 @@ parser = argparse.ArgumentParser()
 # Common
 parser.add_argument('action', default='train', choices=('train', 'infer', 'generate'), nargs='?')
 parser.add_argument('--runs', type=int, default=100, help='Number of runs')
-parser.add_argument('--batch-size', type=int, default=32)
 # Training
 parser.add_argument('--epochs', type=int, default=2)
+parser.add_argument('--batch-size', type=int, default=32)
+# Inference
+# Dataset
+parser.add_argument('--generator-processes', type=int, default=4)
+parser.add_argument('--dataset-path', type=str, default=None)
 parser.add_argument('--dataset-size', type=int, default=100000)
 parser.add_argument('--dataset-removed', type=str, default='10,50')
-# Inference
-# Generator
-parser.add_argument('--generator-processes', type=int, default=4)
 # Model
 parser.add_argument('--model-path', default='sudoku_ml.models.DEFAULT_MODEL',
                     help='Python path to the model to compile')
@@ -79,9 +80,14 @@ def main():
         log_dir=args.log_dir,
         verbose=args.tf_verbose,
     )
-    generator = datasets.Generator(
-        processes=args.generator_processes,
-    )
+    if args.dataset_path:
+        generator = datasets.FromFileGenerator(
+            fd=args.dataset_path,
+        )
+    else:
+        generator = datasets.Generator(
+            processes=args.generator_processes,
+        )
 
     if args.action == 'train':
         dataset = generator.generate_training_dataset(

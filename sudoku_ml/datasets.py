@@ -75,9 +75,9 @@ class Generator(BaseGenerator):
         y = (y.reshape((size, 81)) + 1).astype(str)
         x = self.np.apply_along_axis(''.join, 1, x)
         y = self.np.apply_along_axis(''.join, 1, y)
-        out_fd.write('quizzes,solutions')
+        out_fd.write('quizzes,solutions\n')
         for i in self.np.arange(size):
-            out_fd.write('%s,%s' % (x[i], y[i]))
+            out_fd.write('%s,%s\n' % (x[i], y[i]))
 
 
 class TfNpGenerator(BaseGenerator):
@@ -96,6 +96,34 @@ class TfNpGenerator(BaseGenerator):
         y = (y.reshape((size, 81)) + 1).numpy().astype(str)
         x = self.np.apply_along_axis(''.join, 1, x)
         y = self.np.apply_along_axis(''.join, 1, y)
-        out_fd.write('quizzes,solutions')
+        out_fd.write('quizzes,solutions\n')
         for i in self.np.arange(size):
-            out_fd.write('%s,%s' % (x[i], y[i]))
+            out_fd.write('%s,%s\n' % (x[i], y[i]))
+
+
+class FromFileGenerator(Generator):
+    def __init__(self, fd, *args, **kwargs):
+        self.fd = fd
+        if isinstance(fd, str):
+            self.fd = open(fd)
+        if not self.fd.readline().startswith('quizzes,solutions'):
+            self.fd.seek(0)
+        super().__init__(*args, **kwargs)
+
+    @property
+    def xy(self):
+        if not hasattr(self, '_xy'):
+            self._xy = self.np.array([
+                [list(i) for i in l.strip().split(',')]
+                for l in self.fd.readlines()
+            ]).astype(int)
+        return self._xy
+
+    def generate_dataset(self, count=1000, flatten=False, removed=0):
+        y = self.xy[:, 1]
+        x = self.remove(y, removed=removed) if removed else self.xy[:, 0]
+        y = y - 1
+        if not flatten:
+            x = x.reshape((count, 9, 9, 1))
+            y = y.reshape((count, 81, 1))
+        return x, y

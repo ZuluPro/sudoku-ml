@@ -11,6 +11,7 @@ RUN python setup.py develop
 
 VOLUME /log_dir/
 VOLUME /models/
+VOLUME /datasets/
 
 CMD ["sudoku-ml", "--log-dir=/log_dir/", "--model-save-file=/models/current.h5", "--tf-profiler-port=6007"]
 
