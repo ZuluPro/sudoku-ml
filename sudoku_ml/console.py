@@ -8,10 +8,12 @@ from tensorflow.experimental import numpy as np
 
 from sudoku_ml.agent import Agent
 from sudoku_ml import datasets
+from sudoku_ml import utils
 
 
 logger = logging.getLogger('sudoku_ml')
 tf_logger = logging.getLogger('tensorflow')
+    
 
 parser = argparse.ArgumentParser()
 # Common
@@ -21,6 +23,7 @@ parser.add_argument('--batch-size', type=int, default=32)
 # Training
 parser.add_argument('--epochs', type=int, default=2)
 parser.add_argument('--dataset-size', type=int, default=100000)
+parser.add_argument('--dataset-removed', type=str, default='10,50')
 # Inference
 # Generator
 parser.add_argument('--generator-processes', type=int, default=4)
@@ -42,16 +45,6 @@ parser.add_argument('--tf-verbose', '-tfv', default=2, type=int)
 
 
 def main():
-    """
-    Main routine
-
-    Two main invocation modes:
-    train: to train the model
-    infer: to use the model to play the game
-
-    Invoke with --help for details
-    """
-
     args = parser.parse_args()
 
     log_verbose = 60 - (args.verbose*10)
@@ -76,6 +69,7 @@ def main():
     if args.tf_profiler_port:
         tf.profiler.experimental.server.start(args.tf_profiler_port)
 
+    removed = utils.parse_remove(args.dataset_removed)
     agent = Agent(
         batch_size=args.batch_size,
         epochs=args.epochs,
@@ -92,7 +86,7 @@ def main():
     if args.action == 'train':
         dataset = generator.generate_training_dataset(
             count=args.dataset_size,
-            removed=10,
+            removed=removed,
         )
         agent.train(
             runs=args.runs,
@@ -102,7 +96,10 @@ def main():
 
     elif args.action == 'infer':
         valid_count = 0
-        x, y = generator.generate_dataset(args.runs)
+        x, y = generator.generate_dataset(
+            count=args.runs,
+            removed=removed,
+        )
         for i in range(args.runs):
             X, Y, value = agent.infer(x[i])
             is_valid = y[i].reshape((9, 9))[X, Y] == value
@@ -115,7 +112,7 @@ def main():
     elif args.action == 'generate':
         x, y = generator.generate_dataset(
             count=args.dataset_size,
-            removed=10,
+            removed=removed,
         )
         generator.print_training_dataset((x, y))
 

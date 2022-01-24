@@ -22,9 +22,12 @@ class BaseGenerator:
         raise NotImplementedError()
 
     def remove(self, y, removed=1):
+        if not hasattr(removed, '__getitem__'):
+            removed = [removed, removed+1]
+
         x = np.copy(y)
         for i in np.arange(x.shape[0]):
-            for _ in np.arange(removed):
+            for _ in np.arange(*removed):
                 j = np.random.randint(81)
                 x[i][j] = 0
         return np.array(x)
